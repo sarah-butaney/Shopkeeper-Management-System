@@ -1,0 +1,257 @@
+#include<conio.h>
+#include<fstream.h>
+#include<stdio.h>
+#include<process.h>
+class product{
+	int pno;
+	char name[50];
+	float price,qty,tax,dis;
+public:
+	void create_product(){
+		cout<<"\nPlease Enter the Product NO. of Product:";
+		cin>>pno;
+		cout<<"\nPlease Enter the Name of Product:";
+		gets(name);
+		cout<<"\nPlease Enter the Price of Product:";
+		cin>>price;
+		cout<<"\nEnter Discount(%) given on the Product:";
+		cin>>dis;
+		}
+	void show_product(){
+		cout<<"The Product No. of Product is:"<<pno<<endl;
+		cout<<"The Name of Product is:"<<name<<endl;
+		cout<<"The Price of Product is:"<<price<<endl;
+		cout<<"Discount(%):"<<dis<<endl;
+		}
+	int retpno()
+		{ return pno; }
+	float retprice()
+		{ return price;}
+	char* retname()
+		{ return name;}
+	int retdis()
+		{ return dis;}
+};
+fstream fp;
+product pr;
+	void write_product(){
+		fp.open("shop.dat",ios::out|ios::app);
+		pr.create_product();
+		fp.write((char*)&pr,sizeof(product));
+		fp.close();
+		cout<<"\nThe Product has been CREATED!!!"<<endl;
+		getch();
+		}
+	void display_all(){
+		clrscr();
+		cout<<"\n\t\tDISPLAY ALL PRODUCTS!!!\n\t\t";
+		fp.open("shop.dat",ios::in);
+		while(fp.read((char*)&pr,sizeof(product))){
+			pr.show_product();
+			cout<<"\n-------------------------------------\n";
+		}
+	fp.close();
+	getch();
+	}
+	void search_sp(int n){
+		clrscr();
+		int flag=0;
+		fp.open("shop.dat",ios::in);
+		while(fp.read((char*)&pr,sizeof(product))){
+			if(pr.retpno()==n){
+				pr.show_product();
+				flag=1;
+			}
+		}
+	fp.close();
+	if(flag==0)
+	cout<<"SORRY RECORD NOT FOUND!!!"<<endl;
+	getch();
+	}
+	void modify_product(){
+		clrscr();
+		int no,found=0;
+		cout<<"\n\\t\tTo Modify\t\t\n";
+		cout<<"\nPlease Enter the Product No. of Product:\n"<<endl;
+		cin>>no;
+		fp.open("shop.dat",ios::in|ios::out);
+		while(fp.read((char*)&pr,sizeof(product)))
+			{
+				if(pr.retpno()==no){
+					pr.show_product();
+					cout<<"\nPlease Enter the New Details of Product"<<endl;
+					pr.create_product();
+					int pos=-1*sizeof(pr);
+					fp.seekp(pos,ios::cur);
+					fp.write((char*)&pr,sizeof(product));
+					cout<<"\n\t\t RECORD UPDATED!!!\t\t\n";
+					found=1;
+				}
+			}
+		fp.close();
+		if(found==0)
+		cout<<"SORRY RECORD NOT FOUND!!!"<<endl;
+		getch();
+		}
+		void delete_product(){
+			clrscr();
+			int no;
+			cout<<"\n\t\tDELETE RECORD\t\t\n";
+			cout<<"\nPlease Enter Product No. of the Product you want to Delete:\n";
+			cin>>no;
+			fp.open("shop.dat",ios::in|ios::out);
+			fstream fp2;
+			fp2.open("temp.dat",ios::out);
+			fp.seekg(0,ios::beg);
+			while(fp.read((char*)&pr,sizeof(product))){
+				if(pr.retpno()!=no)
+					{ fp2.write((char*)&pr,sizeof(product)); }
+			}
+			fp2.close();
+			fp.close();
+			remove("shop.dat");
+			rename("temp.dat","shop.dat");
+			cout<<"\t\t\tRECORD DELETED!!!"<<endl;
+			getch();
+		}
+		void menu(){
+			clrscr();
+			fp.open("shop.dat",ios::in);
+			if(!fp){
+				cout<<"\t\t\tERROR!!!\nFILE COULD NOT BE OPENED...\nGo to Admin Menu to Create File";
+				cout<<"\nProgram is Closing.....";
+			}
+			else
+				cout<<"\n\t\t\tPRODUCT MENU\t\t\t\n";
+				cout<<"================================================================"<<endl;
+				cout<<"\tProduct No.\t\tProduct Name\t\tPrice\n";
+				cout<<"----------------------------------------------------------------"<<endl;
+			while(fp.read((char*)&pr,sizeof(product)))
+				cout<<"\t"<<pr.retpno()<<"\t\t\t"<<pr.retname()<<"\t\t\t"<<pr.retprice()<<endl;
+		fp.close();
+		getch();
+		}
+		void place_order(){
+			clrscr();
+			int a[50],quant[50];
+			float amt,disamt,total;
+			char ch='Y',c;
+			menu();
+			cout<<"\n\t\t\tPLACE YOUR ORDER...\t\t\t"<<endl;
+			cout<<"**************************************************************"<<endl;
+			do{
+				cout<<"Enter the Product No. of the Product:"<<endl;
+				cin>>a[c];
+				cout<<"Enter Quantity in Number:"<<endl;
+				cin>>quant[c];
+				c++;
+				cout<<"Do you want to buy something else?(Y/N)"<<endl;
+				cin>>ch;
+				if(ch=='y'||ch=='Y')
+					continue;
+				else
+					break;
+			}while(ch=='y'||ch=='Y');
+			cout<<"\tThank You for Placing the Order\n";
+			clrscr();
+			cout<<"\n<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<INVOICE>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"<<endl;
+			cout<<"Pr No.\t\tPr Name\t\tQty\t\tPrice\t\tAmt\tDis amt\n";
+			for(int x=0;x<=c;x++){
+				fp.open("shop.dat",ios::in);
+				fp.read((char*)&pr,sizeof(product));
+				while(!fp.eof()){
+					if(pr.retpno()==a[x]){
+						amt=pr.retprice()*quant[x];
+						disamt=amt-(amt*pr.retdis()/100);
+						cout<<a[x]<<"\t\t"<<pr.retpno()<<"\t\t"<<quant[x]<<"\t\t"<<pr.retprice()<<"\t\t"<<amt<<"\t"<<disamt<<endl;
+						total+=disamt;
+					}
+				fp.read((char*)&pr,sizeof(product));
+			}
+			fp.close();
+		}
+		cout<<"\t\t\tTOTAL="<<total<<endl;
+		cout<<"\t\tTHANK YOU FOR YOUR VISIT!!!"<<endl;
+		cout<<"\t\tWE HOPE TO SEE YOU AGAIN..."<<endl;
+		getch();
+		}
+	void admin_menu(){
+		clrscr();
+		char ch;
+		cout<<"\t\t\t\tADMIN MENU\t\t\t\t\t"<<endl;
+		cout<<"\t1.Create Product\t"<<endl;
+		cout<<"\t2.Display All Products\t"<<endl;
+		cout<<"\t3.Search A Specific Product"<<endl;
+		cout<<"\t4.Modify A Product"<<endl;
+		cout<<"\t5.Delete Product"<<endl;
+		cout<<"\t6.Product Menu"<<endl;
+		cout<<"\t7.Back to Main Menu"<<endl;
+		cout<<"Please Enter Your Choice(1-7)"<<endl;
+		ch=getche();
+		switch(ch){
+			case'1':
+				write_product();
+				break;
+			case'2':
+				display_all();
+				break;
+			case'3':int num;
+				cout<<"Please Enter the Product No.of Product to be searched:"<<endl;
+				cin>>num;
+				search_sp(num);
+				break;
+			case'4':
+				modify_product();
+				break;
+			case'5':
+				delete_product();
+				break;
+			case'6':
+				menu();
+				break;
+			case'7':
+				break;
+			default:
+				admin_menu();
+				cout<<"Sorry Wrong Choice Entered..."<<endl;
+
+		}
+	}
+	void main(){
+		clrscr();
+		char m;
+		cout<<"\t\t\tWELCOME TO SUPER BONANZA HYPERMARKET"<<endl;
+		do{
+			cout<<"\t\t\t\t\tMAIN MENU"<<endl;
+			cout<<"\t1.CUSTOMER"<<endl;
+			cout<<"\t2.ADMINISTRATOR"<<endl;
+			cout<<"\t3.EXIT"<<endl;
+			cout<<"Please Select Your Option(1-3)"<<endl;
+			m=getche();
+			switch(m){
+				case'1':
+					place_order();
+					break;
+				case'2':
+					admin_menu();
+					break;
+				case'3':
+					exit(0);
+				default:
+					main();
+					cout<<"Sorry Wrong Choice Entered..."<<endl;
+			}
+		}while(m!='3');
+	}
+
+
+
+
+
+
+
+
+
+
+
+
